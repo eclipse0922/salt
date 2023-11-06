@@ -26,10 +26,18 @@ class DisplayUtils:
         image = cv2.add(background, overlay_on_masked_image)
         return image
 
+    def calculate_polygon_area(self, polygon):
+        x = polygon[0::2]
+        y = polygon[1::2]
+        return 0.5 * np.abs(np.dot(x, np.roll(y, 1)) - np.dot(y, np.roll(x, 1)))
+
     def __convert_ann_to_mask(self, ann, height, width):
         mask = np.zeros((height, width), dtype=np.uint8)
         poly = ann["segmentation"]
-        rles = coco_mask.frPyObjects(poly, height, width)
+        # Find the largest polygon by area
+        largest_poly = max(poly, key=self.calculate_polygon_area)
+
+        rles = coco_mask.frPyObjects([largest_poly], height, width)ly, height, width)
         rle = coco_mask.merge(rles)
         mask_instance = coco_mask.decode(rle)
         mask_instance = np.logical_not(mask_instance)
